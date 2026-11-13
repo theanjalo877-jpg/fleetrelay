@@ -11,7 +11,7 @@ A map-first portfolio prototype showing how a passenger-transport operator could
 4. Open **Driver app**, then **Accept job**. Close it to watch the bus travel.
 5. Select **Send recovery request**. In Driver app choose **Recovery driver**, accept and return to the map.
 6. After arrival, confirm the passenger transfer. Then confirm vehicle recovery.
-7. Download the response report, inspect Fleet / Activity, or restart.
+7. Download the management PDF report, inspect Fleet / Activity, or restart.
 
 Try declining the first backup request to see the alternative recommendation. Declining both suitable drivers requires manual follow-up. Declining recovery requires a simulated availability recheck.
 
@@ -29,7 +29,7 @@ Create a **new repository named `fleetrelay`**, separate from VerifyDesk. Upload
 On Streamlit Community Cloud, create a new app from this repository, choose the `main` branch and `app.py` as the main file. No API keys or secrets are required. The app uses Streamlit 1.67.0; choose Python 3.11 or newer.
 
 ## Technology
-Python / Streamlit host; JavaScript state machine; high-DPI Canvas 2D vector map; requestAnimationFrame vehicle motion; CSS transitions; responsive UI; native HTML dialogs; JSON report export. No paid mapping SDK, GPS hardware or backend is needed for the demo. The illustrative vector map is original and is not geographic navigation data. Optional Google Fonts requests fall back to local sans-serif fonts if unavailable.
+Python / Streamlit host; JavaScript state machine; high-DPI Canvas 2D vector map; requestAnimationFrame vehicle motion; CSS transitions; responsive UI; native HTML dialogs; management PDF report export. No paid mapping SDK, GPS hardware or backend is needed for the demo. The illustrative vector map is original and is not geographic navigation data. Optional Google Fonts requests fall back to local sans-serif fonts if unavailable.
 
 ## Honest scope
 - All vehicles, drivers, positions, routes, ETAs and notifications are fictional.
@@ -37,7 +37,7 @@ Python / Streamlit host; JavaScript state machine; high-DPI Canvas 2D vector map
 - The selection checks 28-passenger capacity, driver availability and an illustrative 35-minute response-service allowance against the next assignment.
 - Driver accounts are simulated views on one device, not authenticated logins. No push messages or SMS are sent.
 - Travel is accelerated to 28/38 seconds; displayed arrival estimates are scenario values, not calculated traffic predictions.
-- Refresh clears all state. Reports are generated locally and only downloaded on request.
+- Refresh clears all state. PDF reports are generated locally and only downloaded on request. They include a plain-English summary, outstanding actions, selection rationale and a chronological timeline. Embedded subset fonts are derived from Liberation Sans under the SIL Open Font License; attribution and licence text are included in the HTML source.
 - No emergency dispatch, signal control, real-time tracking or operational safety guarantee is provided.
 - Reduced-motion preferences pause the simulation initially; Resume motion starts it.
 
