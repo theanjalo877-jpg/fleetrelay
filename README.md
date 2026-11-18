@@ -38,8 +38,10 @@ vector tiles based on OpenStreetMap. The map centers on Al Ain and uses English
 place names or Latin-script transliterations when available. Drag and zoom to explore, select a vehicle marker to inspect its
 assignment, or use the reset control to fit the fleet. The breakdown pulse,
 moving vehicles and animated response paths use the scenario clock. The map
-requires internet access, and the simulation panel stays available if tiles
-fail or the browser cannot render the vector map.
+requires internet access. If the English vector map stalls or loses its
+rendering context, the app switches to standard OpenStreetMap tiles, whose
+labels may be in Arabic. If both sources fail, the simulation remains usable
+and the map offers a retry.
 
 ## Honest scope
 - The street map is real. All vehicles, drivers, positions, paths, ETAs and notifications are fictional. Response paths illustrate the workflow and do not follow calculated road routes.
