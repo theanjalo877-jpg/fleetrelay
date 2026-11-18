@@ -23,16 +23,26 @@ pip install -r requirements.txt
 streamlit run app.py
 ```
 
-## GitHub and Streamlit Community Cloud
-Create a **new repository named `fleetrelay`**, separate from VerifyDesk. Upload the extracted files from this folder to the repository root — **not the ZIP itself**. Keep `app.py` and `fleetrelay.html` together.
+## Hosting
 
-On Streamlit Community Cloud, create a new app from this repository, choose the `main` branch and `app.py` as the main file. No API keys or secrets are required. The app uses Streamlit 1.67.0; choose Python 3.11 or newer.
+On Streamlit Community Cloud, deploy this repository from the `main` branch with
+`app.py` as the entry point. Keep `fleetrelay.html` beside it. The frontend is also
+a standalone page and can be served over HTTPS. No map API key is required for
+the demo.
 
-## Technology
-Python / Streamlit host; JavaScript state machine; high-DPI Canvas 2D vector map; requestAnimationFrame vehicle motion; CSS transitions; responsive UI; native HTML dialogs; management PDF report export. No paid mapping SDK, GPS hardware or backend is needed for the demo. The illustrative vector map is original and is not geographic navigation data. Optional Google Fonts requests fall back to local sans-serif fonts if unavailable.
+## Map
+
+FleetRelay uses [Leaflet](https://leafletjs.com/) and
+[OpenStreetMap](https://www.openstreetmap.org/copyright) street tiles centered
+on Al Ain. Drag and zoom to explore, select a vehicle marker to inspect its
+assignment, or use the reset control to fit the fleet. The breakdown pulse,
+moving vehicles and animated response paths use the scenario clock. The map
+requires internet access, and the simulation panel stays available if tiles
+fail. The public tile service is subject to the
+[OpenStreetMap tile usage policy](https://operations.osmfoundation.org/policies/tiles/).
 
 ## Honest scope
-- All vehicles, drivers, positions, routes, ETAs and notifications are fictional.
+- The street map is real. All vehicles, drivers, positions, paths, ETAs and notifications are fictional. Response paths illustrate the workflow and do not follow calculated road routes.
 - The assistant uses deterministic rules, **not a connected AI model**. The prototype demonstrates an AI-assisted product concept without claiming live AI capabilities.
 - The selection checks 28-passenger capacity, driver availability and an illustrative 35-minute response-service allowance against the next assignment.
 - Driver accounts are simulated views on one device, not authenticated logins. No push messages or SMS are sent.
