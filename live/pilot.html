@@ -191,12 +191,13 @@ async function startSharing(){
  initializing=true;
  message('Waiting for permission and a GPS fix…');
  try{
-  await new Promise((resolve,reject)=>navigator.geolocation.getCurrentPosition(resolve,reject,geoOptions))
+  const firstFix=await new Promise((resolve,reject)=>navigator.geolocation.getCurrentPosition(resolve,reject,geoOptions))
    .catch(error=>{locationError(error);return Promise.reject(new Error($('driverStatus').textContent));});
   await api('driver/start',{});
   sharing=true;lastSent=0;
   $('start').hidden=true;$('stop').disabled=false;$('stop').dataset.stopped='false';
-  watchId=navigator.geolocation.watchPosition(sendFix,locationError,geoOptions);
+  await sendFix(firstFix);
+  if(sharing)watchId=navigator.geolocation.watchPosition(sendFix,locationError,geoOptions);
   heartbeat=setInterval(()=>{if(sharing&&!document.hidden)navigator.geolocation.getCurrentPosition(sendFix,locationError,geoOptions);},12000);
   requestWake();
  }finally{initializing=false;}

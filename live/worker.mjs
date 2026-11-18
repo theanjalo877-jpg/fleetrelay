@@ -126,7 +126,7 @@ async function api(request,env,path){
          accuracy<0||accuracy>100000||capturedAt<now-45000||capturedAt>now+10000)return problem('Waiting for a fresh GPS fix.',422);
       const result=await query(`UPDATE fleet_runs SET lat=?,lng=?,accuracy=?,updated_at=?
         WHERE id=? AND session_hash=? AND active=1 AND started_at<=? AND (updated_at IS NULL OR updated_at<?)`,
-        lat,lng,accuracy,Math.min(now,capturedAt),run.id,key,capturedAt,capturedAt).run();
+        lat,lng,accuracy,Math.min(now,capturedAt),run.id,key,capturedAt+10000,capturedAt).run();
       return result.meta.changes?json({ok:true}):problem('Location no longer current for this run.',409);
     }
   }

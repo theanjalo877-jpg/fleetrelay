@@ -486,7 +486,7 @@ $('startBtn').onclick=()=>doAction('start');$('driverBtn').onclick=()=>driver(st
 const schoolProfiles=[
  {id:'AJ',name:'Al Ain Juniors',districts:['Asharej','Al Maqam'],gate:[24.1999759,55.7232913],direction:1},
  {id:'OE',name:'Our Own English High School',districts:['Al Jimi','Al Nyadat'],gate:[24.196929,55.710309],direction:-1},
- {id:'IS',name:'Indian School',districts:['Town','Al Jahili'],approximate:true,gate:[24.2094,55.744],direction:1},
+ {id:'IS',name:'Indian School',districts:['Town','Al Jahili'],approximate:true,gate:[24.197178,55.708031],direction:1},
  {id:'AS',name:'Al Sanawbar School',districts:['Sarooj','Mazyad'],gate:[24.197868,55.711755],direction:-1},
  {id:'AD',name:'Al Dhafra School',districts:['Al Maqam','Asharej'],gate:[24.201154,55.718089],direction:1},
 ];
@@ -558,7 +558,7 @@ function buildSchoolMap(){
  L.polyline(path,{color:'#fffdf2',weight:9,interactive:false}).addTo(schoolLayer);
  L.polyline(path,{color:'#a76c09',weight:4,dashArray:'8 7',interactive:false}).addTo(schoolLayer);
  const [lat,lng]=school.gate;
- const gateLabel=school.approximate?'Illustrative school pin':'Public school campus';
+ const gateLabel=school.approximate?'Nearby public bus stop':'Public school campus';
  const icon=L.divIcon({className:'school-gate',iconSize:[125,33],iconAnchor:[62,-33],html:`<span>${gateLabel}</span>`});
  L.marker(school.gate,{icon,title:school.name}).bindTooltip(school.name+' · '+gateLabel).addTo(schoolLayer);
  for(const [index,progress] of [.08,.27,.43].entries()){

@@ -97,5 +97,5 @@ The Sites deployment uses the Worker assembled by
 `live/drizzle`. The existing Streamlit simulator links to the hosted live desk.
 Public campus pins in the demo use the published Al Ain Juniors and Al Dhafra
 school pins and published GEMS Our Own and Al Sanawbar location data. The Indian
-School pin is explicitly illustrative pending verification. Pickup icons and
+School marker uses the nearby public bus stop pending campus-pin verification. Pickup icons and
 routes are fictional.
