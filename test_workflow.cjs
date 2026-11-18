@@ -31,4 +31,29 @@ check(()=>{
  assert.equal(E.eligible({...bus,passengers:7,next:38},s),false);
  assert.equal(E.eligible({...bus,passengers:7,available:false},s),false);
 });
+check(()=>{
+ const s=E.initial();
+ for(const action of ['start','send','acceptBus','sendTow','acceptTow'])assert.equal(E.act(s,action),true);
+ E.tick(s,39);
+ assert.equal(E.act(s,'recover'),false);
+ assert.equal(E.act(s,'transfer'),true);
+ assert.equal(s.bus,'delivering');
+ assert.equal(s.homeLeft,28);
+ assert.equal(E.act(s,'recover'),true);
+ assert.equal(s.tow,'towing');
+ assert.equal(E.act(s,'garageHandover'),false);
+ assert.equal(E.act(s,'homeHandover'),false);
+ E.tick(s,25);
+ assert.equal(s.tow,'garage');
+ assert.equal(s.bus,'dropoff');
+ assert.equal(E.act(s,'garageHandover'),true);
+ for(const remaining of [18,9,0]){
+  assert.equal(E.act(s,'homeHandover'),true);
+  assert.equal(s.homeLeft,remaining);
+  if(remaining)E.tick(s,15);
+ }
+ assert.equal(s.bus,'complete');
+ assert.equal(s.tow,'complete');
+ assert.equal(E.act(s,'homeHandover'),false);
+});
 console.log(`${tests} workflow checks passed`);
