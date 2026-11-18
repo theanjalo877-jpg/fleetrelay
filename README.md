@@ -63,7 +63,7 @@ Run `node test_workflow.cjs` to check the state machine, eligibility, rejection,
 
 ## School transport drill
 
-Open **School drill** and select one of five example schools. The three yellow
+Open **School drill** and select one of five example schools. The four school-colored
 buses use fictional driver names and licence numbers. Hover or tap a marker
 to inspect its driver and passenger count. Use **Fleet** for Mulkiya, insurance,
 driver licence, vehicle inspection, oil-change and scheduled-service checks.
@@ -114,3 +114,28 @@ recovery. The map's search control covers the bundled Al Ain extent, with
 street, landmark and named business labels from OpenStreetMap/OpenFreeMap
 and an independently sourced STMC location. Label density increases as you
 zoom. Coverage reflects the source snapshot.
+
+### Full school day and live run monitoring
+
+The drill roster contains 20 buses, four for each of the five listed schools.
+Complete morning handover to open the parking and duty board, then run the
+11:30 junior and 14:30 senior home trips. The depot's full-size and small-bus
+bays, parking alternatives, driver breaks, emergency replacement and missed
+report events are simulated. Each return uses its own directional road route
+and updates passenger counts after a confirmed fictional handover.
+
+Vehicle travel is shown at 6× playback using path distance and modelled
+vehicle speeds. The 60/80 km/h school thresholds are scenario settings, not
+a posted-limit database. The breakdown location is a staged coordinate with
+a nearby street label where the map has one.
+
+Live Desk shares the school liveries. Configure a reporting deadline, driver
+phone, and verified run speed threshold when creating an assignment. Live
+speed comes from the phone when the device reports it. Stale or low-accuracy
+fixes do not trigger speed warnings. Dispatch can call or open WhatsApp, and
+can reference the bus ID as a radio call sign. Alerts do not automatically
+send a message to the driver or transmit to a radio.
+
+An optional HTTPS camera portal link opens the operator's authorized camera
+vendor page. FleetRelay does not receive or store camera video or vendor
+credentials. The live assignment metadata uses migration `0001_run_monitoring`.

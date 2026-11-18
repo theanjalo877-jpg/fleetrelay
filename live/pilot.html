@@ -17,8 +17,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 label{display:grid;gap:4px;font-size:13px;color:var(--muted);margin-bottom:8px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}input{min-width:0;width:100%}
 .badge{font-size:12px;border:1px solid currentColor;border-radius:999px;padding:2px 8px;color:var(--mint)}.badge.stale{color:var(--amber)}
 .leaflet-pane .live-marker{transition:transform .65s linear}@media(prefers-reduced-motion:reduce){.leaflet-pane .live-marker{transition:none}}
-.live-marker span{display:grid;place-items:center;width:31px;height:31px;border:2px solid #fff;border-radius:11px;background:#097a59;color:#fff;font-size:19px;box-shadow:0 3px 12px #1118}
-.live-marker.stale span{background:#a26910}.leaflet-tooltip{font-weight:750}.driver{max-width:560px;margin:auto}.driver button{min-height:46px}.state{font-size:15px;margin:8px 0}.state:empty{display:none}
+.live-marker span{display:grid;place-items:center;width:31px;height:31px;border:2px solid #fff;border-radius:11px;background:var(--bus-livery,#315365);color:#131c22;font-size:19px;box-shadow:0 3px 12px #1118}
+.live-marker.stale span{outline:3px solid #d1973c}.live-marker.overspeed span{outline:3px solid #e04c42}.leaflet-tooltip{font-weight:750}.driver{max-width:560px;margin:auto}.driver button{min-height:46px}.state{font-size:15px;margin:8px 0}.state:empty{display:none}
 @media(max-width:760px){.grid{grid-template-columns:1fr}#map{height:48vh;min-height:300px}}
 </style></head>
 <body><header><strong>FleetRelay.</strong><nav><a href="/demo">School &amp; breakdown demo</a></nav></header>
@@ -31,6 +31,7 @@ label{display:grid;gap:4px;font-size:13px;color:var(--muted);margin-bottom:8px}.
 <div class="grid" id="managementContent" hidden>
 <div id="map" aria-label="Live fleet map"></div>
 <div>
+<div class="card"><div class="row"><h2>Assigned runs and alerts</h2><a href="#addRun">New assignment ↓</a><label>School filter<select id="filter"><option value="">All schools</option></select></label></div><div id="runs"></div></div>
 <section class="card" id="third-party-recovery" aria-labelledby="recoveryTitle"><form id="recoveryForm"><h2 id="recoveryTitle">Third-party recovery</h2>
 <p>Save providers your dispatcher can call or message when a bus needs recovery.</p>
 <div id="recoveryContacts"></div><p id="noRecoveryContacts" hidden>No providers saved yet. Add a provider name and international phone number to enable Call and WhatsApp.</p><div class="form-grid">
@@ -42,9 +43,13 @@ label{display:grid;gap:4px;font-size:13px;color:var(--muted);margin-bottom:8px}.
 <label>Route<input name="route" required maxlength="80" placeholder="AJ-04 morning"></label>
 <label>Bus ID<input name="vehicle" required maxlength="80" placeholder="B12"></label>
 <label>Driver<input name="driver" required maxlength="80" placeholder="Driver name"></label>
-</div><button class="primary" type="submit">Create driver link</button>
+<label>Driver phone (optional)<input name="phone" type="tel" placeholder="+971…"></label>
+<label>Report by · Dubai time (optional)<input name="reportDue" type="datetime-local"></label>
+<label>Speed alert threshold · km/h (optional)<input name="speedLimit" type="number" min="10" max="120"></label>
+<label id="incident-video">Authorized camera portal (optional)<input name="cameraUrl" type="url" maxlength="500" placeholder="https://…"></label>
+</div><p>Set the speed threshold according to the operator’s verified route rules. Camera links open the vendor’s own login.</p><button class="primary" type="submit">Create driver link</button>
 <div id="invite" hidden><label>Single-use driver link · expires in 2 hours<input id="inviteUrl" readonly></label><button id="copyInvite" type="button">Copy link</button></div></form>
-<div class="card"><div class="row"><h2>Assigned runs</h2><label>School filter<select id="filter"><option value="">All schools</option></select></label></div><div id="runs"></div></div>
+
 </div></div></section>
 <section id="driver" class="driver" hidden>
 <h1>Driver run</h1><p id="driverStatus" class="state" role="status"></p>
@@ -77,17 +82,36 @@ function initMap(){
   maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
  }).addTo(map);
 }
+const schoolColors={
+ AJ:['#158550','#f6faf4'],IS:['#317bd3','#f5f9ff'],OE:['#a87553','#7d503a'],
+ AS:['#56ae77','#6aaaae'],AD:['#9259ad','#f4cc75']
+};
+function schoolLivery(name){
+ const school=name.toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+ const key=/^(aj|aj)|al ain junior/.test(school)?'AJ':/^oe(?: |$)|our own/.test(school)?'OE':
+  /^as(?: |$)|sanawbar/.test(school)?'AS':/^ad(?: |$)|dhafra/.test(school)?'AD':/^is(?: |$)|indian school/.test(school)?'IS':'';
+ return schoolColors[key]||['#91a9bd','#dce8f0'];
+}
+function contactLink(text,href,external=false){
+ const link=document.createElement('a');link.textContent=text;link.href=href;
+ if(external){link.target='_blank';link.rel='noopener noreferrer';}
+ return link;
+}
 function renderRuns(data){
  const list=$('runs');list.replaceChildren();
  const allowed=data.runs.filter(run=>!$('filter').value||run.school===$('filter').value);
  const visible=new Set();
  for(const run of allowed){
   const fresh=run.active&&run.updated_at&&data.now-run.updated_at<data.staleAfter;
-  const status=fresh?'Live':run.active&&run.updated_at?'Stale':run.active?'Waiting for GPS':'Stopped';
+  const late=Boolean(!run.reported_at&&run.report_due&&data.now>run.report_due);
+  const overspeed=Boolean(fresh&&run.accuracy<=50&&run.speed!==null&&run.speed_limit&&run.speed>run.speed_limit);
+  const status=late?'Driver not reported':fresh?'Live':run.active&&run.updated_at?'Stale':run.active?'Waiting for GPS':'Stopped';
   const div=document.createElement('article');div.className='run';
   const title=document.createElement('strong');title.textContent=run.vehicle+' · '+run.school;
-  const badge=document.createElement('span');badge.className='badge'+(status==='Stale'?' stale':'');badge.textContent=status;
-  const head=document.createElement('div');head.className='row';head.append(title,badge);div.append(head);
+  const badge=document.createElement('span');badge.className='badge'+(status==='Stale'||late?' stale':'');badge.textContent=status;
+  const head=document.createElement('div');head.className='row';
+  const swatch=document.createElement('span');swatch.style.cssText='width:17px;height:17px;border:1px solid #fff8;border-radius:4px;background:linear-gradient(145deg,'+schoolLivery(run.school).join(',')+')';
+  head.append(swatch,title,badge);div.append(head);
   const p=document.createElement('p');p.textContent=run.driver+' · '+run.route+
    (run.updated_at?' · '+Math.max(0,Math.round((data.now-run.updated_at)/1000))+'s ago · ±'+Math.round(run.accuracy)+' m':'');div.append(p);
   if(run.active&&run.lat!==null&&run.lng!==null){
@@ -95,19 +119,40 @@ function renderRuns(data){
    link.target='_blank';link.rel='noopener noreferrer';link.textContent='Open position in Google Maps';div.append(link);
    if(map){
     const pos=[run.lat,run.lng];visible.add(run.id);
-    const icon=L.divIcon({className:'live-marker'+(fresh?'':' stale'),html:'<span aria-hidden="true">▣</span>',iconSize:[31,31],iconAnchor:[15,15]});
+    const colors=schoolLivery(run.school);
+    const icon=L.divIcon({className:'live-marker'+(fresh?'':' stale')+(overspeed?' overspeed':''),
+     html:'<span style="--bus-livery:linear-gradient(145deg,'+colors.join(',')+')" aria-hidden="true">▣</span>',iconSize:[31,31],iconAnchor:[15,15]});
     if(!markers.has(run.id)){
      const label=document.createElement('span');label.textContent=run.vehicle;
      const marker=L.marker(pos,{icon,title:run.vehicle}).bindTooltip(label).addTo(map);
-     markers.set(run.id,{marker,fresh});
+     markers.set(run.id,{marker,fresh,overspeed});
      if(!currentSelection){map.setView(pos,15);currentSelection=run.id;}
     }else{
      const entry=markers.get(run.id);entry.marker.setLatLng(pos);
-     if(entry.fresh!==fresh){entry.marker.setIcon(icon);entry.fresh=fresh;}
+     if(entry.fresh!==fresh||entry.overspeed!==overspeed){entry.marker.setIcon(icon);entry.fresh=fresh;entry.overspeed=overspeed;}
     }
    }
   }
   const controls=document.createElement('div');controls.className='row';
+  if(fresh){
+   const speed=document.createElement('p');
+   speed.textContent=run.speed===null?'Speed unavailable on this phone':
+    Math.round(run.speed)+' km/h'+(run.speed_limit?' · alert threshold '+run.speed_limit+' km/h':'')+
+    (overspeed?' · SPEED ALERT':run.accuracy>50?' · GPS accuracy too low for alerts':'');
+   if(overspeed)speed.className='badge stale';div.append(speed);
+  }
+  if(run.phone){
+   controls.append(contactLink('Call driver','tel:'+run.phone));
+   const alert=late?'Please report to dispatch when safely stopped.':
+    overspeed?'Speed alert for '+run.vehicle+'. Follow the posted and vehicle-specific limit. Acknowledge when safely stopped.':
+    'Please contact dispatch when safely stopped.';
+   controls.append(contactLink('WhatsApp driver','https://wa.me/'+run.phone.slice(1)+'?text='+encodeURIComponent(alert),true));
+  }
+  if(late||overspeed){
+   const radio=document.createElement('span');radio.className='badge stale';radio.textContent='Radio call sign: '+run.vehicle;
+   controls.append(radio);
+  }
+  if(run.camera_url)controls.append(contactLink('Open camera portal',run.camera_url,true));
   if(run.active&&run.updated_at&&map){
    const locate=document.createElement('button');locate.textContent='Center bus';
    locate.onclick=()=>map.setView([run.lat,run.lng],Math.max(map.getZoom(),15));controls.append(locate);
@@ -147,7 +192,7 @@ async function refresh(){
   $('setup').hidden=true;$('managementContent').hidden=false;initMap();
   if(!recoveryLoaded){
    await refreshRecovery();recoveryLoaded=true;
-   if(location.hash==='#third-party-recovery')$('third-party-recovery').scrollIntoView();
+   if(['#third-party-recovery','#incident-video'].includes(location.hash))$(location.hash.slice(1)).scrollIntoView();
   }
   const selected=$('filter').value;
   const schools=[...new Set(latest.runs.map(r=>r.school))].sort();
@@ -176,7 +221,7 @@ async function sendFix(position){
  inFlight=true;
  try{
   await api('driver/location',{lat:position.coords.latitude,lng:position.coords.longitude,
-   accuracy:position.coords.accuracy,capturedAt:position.timestamp});
+   accuracy:position.coords.accuracy,speedMps:position.coords.speed,capturedAt:position.timestamp});
   lastSent=Date.now();
   if(sharing)message('Sharing live GPS · last update '+new Date().toLocaleTimeString()+' · ±'+Math.round(position.coords.accuracy)+' m');
  }catch(error){if(sharing)message(error.message);}finally{inFlight=false;}

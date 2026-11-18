@@ -1,1 +1,1 @@
-{"version":"7","dialect":"sqlite","entries":[{"idx":0,"version":"6","when":1795020000000,"tag":"0000_live_pilot","breakpoints":true}]}
+{"version":"7","dialect":"sqlite","entries":[{"idx":0,"version":"6","when":1795020000000,"tag":"0000_live_pilot","breakpoints":true},{"idx":1,"version":"6","when":1795035600000,"tag":"0001_run_monitoring","breakpoints":true}]}

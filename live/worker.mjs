@@ -7,7 +7,7 @@ const problem = (message,status) => json({error:message},status);
 const hash = async value => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(value))), b=>b.toString(16).padStart(2,'0')).join('');
 const random = () => Array.from(crypto.getRandomValues(new Uint8Array(24)),b=>b.toString(16).padStart(2,'0')).join('');
 const sessionCookie = value => `__Host-fleet_driver=${value}; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=${value?86400:0}`;
-const fields = 'id,school,route,vehicle,driver,active,lat,lng,accuracy,updated_at';
+const fields = 'id,school,route,vehicle,driver,active,lat,lng,accuracy,updated_at,phone,report_due,reported_at,speed,speed_limit,camera_url';
 const tokenPattern = /^[a-f0-9]{48}$/;
 const clientHTML = '<!--FLEET_LIVE_HTML-->';
 const demoHTML = '<!--FLEET_DEMO_HTML-->';
@@ -79,16 +79,30 @@ async function api(request,env,path){
     if(path==='/api/manage/runs'&&write){
       const input=['school','route','vehicle','driver'].map(key=>typeof body[key]==='string'?body[key].trim():'');
       if(input.some(value=>!value||value.length>80))return problem('Enter a school, route, vehicle and driver (up to 80 characters each).',400);
+      const phone=typeof body.phone==='string'?body.phone.replace(/[\s()-]/g,''):'';
+      if(phone&&!/^\+[1-9]\d{7,14}$/.test(phone))return problem('Use an international phone number, e.g. +971…',400);
+      const due=typeof body.reportDue==='string'&&body.reportDue?Date.parse(body.reportDue+'+04:00'):null;
+      if(due!==null&&!Number.isFinite(due))return problem('Enter a valid Dubai report time.',400);
+      const speedLimit=body.speedLimit?Number(body.speedLimit):null;
+      if(speedLimit!==null&&(!Number.isInteger(speedLimit)||speedLimit<10||speedLimit>120))return problem('Enter a speed alert threshold from 10 to 120 km/h.',400);
+      let camera=null;
+      if(body.cameraUrl){
+       try{
+        const parsed=new URL(body.cameraUrl);
+        if(parsed.protocol!=='https:'||parsed.username||parsed.password||parsed.href.length>500||parsed.search||parsed.hash)throw new Error();
+        camera=parsed.href;
+       }catch{return problem('Use the secure vendor portal URL without credentials, query parameters, or a fragment.',400);}
+      }
       const id=crypto.randomUUID();
       const token=random();
-      await query('INSERT INTO fleet_runs (id,school,route,vehicle,driver,created_at,invite_hash,invite_expiry) VALUES (?,?,?,?,?,?,?,?)',
-        id,...input,now,await hash(token),now+hour*2).run();
+      await query('INSERT INTO fleet_runs (id,school,route,vehicle,driver,created_at,invite_hash,invite_expiry,phone,report_due,speed_limit,camera_url) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
+        id,...input,now,await hash(token),now+hour*2,phone||null,due,speedLimit,camera).run();
       return json({id,link:'/driver#'+token},201);
     }
     if(path==='/api/manage/invite'&&write){
       const token=random();
       const result=await query(`UPDATE fleet_runs SET invite_hash=?,invite_expiry=?,session_hash=NULL,driver_user=NULL,
-        session_expiry=NULL,active=0,lat=NULL,lng=NULL,accuracy=NULL,updated_at=NULL,started_at=NULL WHERE id=?`,
+        session_expiry=NULL,active=0,lat=NULL,lng=NULL,accuracy=NULL,updated_at=NULL,started_at=NULL,speed=NULL WHERE id=?`,
         await hash(token),now+hour*2,typeof body.id==='string'?body.id:'').run();
       return result.meta.changes?json({link:'/driver#'+token}):problem('Run not found.',404);
     }
@@ -113,20 +127,21 @@ async function api(request,env,path){
     if(!run)return problem('This driver session expired. Ask management for a new link.',401);
     if(path==='/api/driver/run'&&!write)return json({run});
     if(path==='/api/driver/start'&&write){
-      await query('UPDATE fleet_runs SET active=1,started_at=? WHERE id=? AND session_hash=? AND active=0',now,run.id,key).run();
+      await query('UPDATE fleet_runs SET active=1,started_at=?,reported_at=COALESCE(reported_at,?) WHERE id=? AND session_hash=? AND active=0',now,now,run.id,key).run();
       return json({ok:true});
     }
     if(path==='/api/driver/stop'&&write){
-      await query('UPDATE fleet_runs SET active=0,lat=NULL,lng=NULL,accuracy=NULL,updated_at=NULL,started_at=NULL WHERE id=? AND session_hash=?',run.id,key).run();
+      await query('UPDATE fleet_runs SET active=0,lat=NULL,lng=NULL,accuracy=NULL,updated_at=NULL,started_at=NULL,speed=NULL WHERE id=? AND session_hash=?',run.id,key).run();
       return json({ok:true});
     }
     if(path==='/api/driver/location'&&write){
       const {lat,lng,accuracy,capturedAt}=body;
+      const speed=Number.isFinite(body.speedMps)&&body.speedMps>=0&&body.speedMps<70?body.speedMps*3.6:null;
       if(![lat,lng,accuracy,capturedAt].every(Number.isFinite)||Math.abs(lat)>90||Math.abs(lng)>180||
          accuracy<0||accuracy>100000||capturedAt<now-45000||capturedAt>now+10000)return problem('Waiting for a fresh GPS fix.',422);
-      const result=await query(`UPDATE fleet_runs SET lat=?,lng=?,accuracy=?,updated_at=?
+      const result=await query(`UPDATE fleet_runs SET lat=?,lng=?,accuracy=?,updated_at=?,speed=?
         WHERE id=? AND session_hash=? AND active=1 AND started_at<=? AND (updated_at IS NULL OR updated_at<?)`,
-        lat,lng,accuracy,Math.min(now,capturedAt),run.id,key,capturedAt+10000,capturedAt).run();
+        lat,lng,accuracy,Math.min(now,capturedAt),speed,run.id,key,capturedAt+10000,capturedAt).run();
       return result.meta.changes?json({ok:true}):problem('Location no longer current for this run.',409);
     }
   }
