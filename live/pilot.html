@@ -25,11 +25,18 @@ label{display:grid;gap:4px;font-size:13px;color:var(--muted);margin-bottom:8px}.
 <main>
 <section id="manage" hidden>
 <h1>Live fleet desk</h1><p>See driver-shared positions and when each phone last checked in.</p>
+<p><a href="#third-party-recovery" id="recoveryShortcut">Third-party recovery directory ↓</a></p>
 <p id="managementStatus" class="state" role="status"></p>
 <div class="card" id="setup" hidden><p>Set up this private workspace before pairing a driver device.</p><button class="primary" id="setupBtn">Set up management</button></div>
 <div class="grid" id="managementContent" hidden>
 <div id="map" aria-label="Live fleet map"></div>
 <div>
+<section class="card" id="third-party-recovery" aria-labelledby="recoveryTitle"><form id="recoveryForm"><h2 id="recoveryTitle">Third-party recovery</h2>
+<p>Save providers your dispatcher can call or message when a bus needs recovery.</p>
+<div id="recoveryContacts"></div><p id="noRecoveryContacts" hidden>No providers saved yet. Add a provider name and international phone number to enable Call and WhatsApp.</p><div class="form-grid">
+<label>Provider name<input name="name" required maxlength="80"></label>
+<label>Vehicle or dispatch number<input name="phone" required type="tel" maxlength="25" placeholder="+971…"></label>
+</div><button type="submit">Save provider</button></form></section>
 <form class="card" id="addRun"><h2>Assign a school run</h2><div class="form-grid">
 <label>School<input name="school" required maxlength="80" placeholder="Al Ain Juniors"></label>
 <label>Route<input name="route" required maxlength="80" placeholder="AJ-04 morning"></label>
@@ -37,12 +44,6 @@ label{display:grid;gap:4px;font-size:13px;color:var(--muted);margin-bottom:8px}.
 <label>Driver<input name="driver" required maxlength="80" placeholder="Driver name"></label>
 </div><button class="primary" type="submit">Create driver link</button>
 <div id="invite" hidden><label>Single-use driver link · expires in 2 hours<input id="inviteUrl" readonly></label><button id="copyInvite" type="button">Copy link</button></div></form>
-<form class="card" id="recoveryForm"><h2>Third-party recovery</h2>
-<p>Save providers your dispatcher can call or message when a bus needs recovery.</p>
-<div id="recoveryContacts"></div><div class="form-grid">
-<label>Provider name<input name="name" required maxlength="80"></label>
-<label>Vehicle or dispatch number<input name="phone" required type="tel" maxlength="25" placeholder="+971…"></label>
-</div><button type="submit">Save provider</button></form>
 <div class="card"><div class="row"><h2>Assigned runs</h2><label>School filter<select id="filter"><option value="">All schools</option></select></label></div><div id="runs"></div></div>
 </div></div></section>
 <section id="driver" class="driver" hidden>
@@ -123,6 +124,7 @@ function renderRuns(data){
 }
 async function refreshRecovery(){
  const {contacts}=await api('manage/recovery');
+ $('noRecoveryContacts').hidden=contacts.length>0;
  $('recoveryContacts').replaceChildren(...contacts.map(contact=>{
   const row=document.createElement('div');row.className='run row';
   const name=document.createElement('strong');name.textContent=contact.name;
@@ -143,7 +145,10 @@ async function refresh(){
   latest=await api('manage/runs');
   if(latest.setup){$('setup').hidden=false;return;}
   $('setup').hidden=true;$('managementContent').hidden=false;initMap();
-  if(!recoveryLoaded){await refreshRecovery();recoveryLoaded=true;}
+  if(!recoveryLoaded){
+   await refreshRecovery();recoveryLoaded=true;
+   if(location.hash==='#third-party-recovery')$('third-party-recovery').scrollIntoView();
+  }
   const selected=$('filter').value;
   const schools=[...new Set(latest.runs.map(r=>r.school))].sort();
   if(JSON.stringify(schools)!==$('filter').dataset.schools){
@@ -212,6 +217,11 @@ if(driverView){
  action($('stop'),async()=>{clearWatch();$('start').hidden=false;$('start').textContent='Resume GPS sharing';await api('driver/stop',{});$('stop').dataset.stopped='true';message('Location sharing stopped.');},()=>!sharing&&$('stop').dataset.stopped==='true');
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)requestWake();});
 }else{
+ $('recoveryShortcut').onclick=event=>{
+  if(!$('managementContent').hidden)return;
+  event.preventDefault();
+  if(!$('setup').hidden){$('setupBtn').focus();message('Set up management to open the recovery directory.');}
+ };
  action($('setupBtn'),async()=>{await api('manage/setup',{});await refresh();});
  $('addRun').addEventListener('submit',async event=>{
   event.preventDefault();
