@@ -26,22 +26,24 @@ streamlit run app.py
 ## Hosting
 
 On Streamlit Community Cloud, deploy this repository from the `main` branch with
-`app.py` as the entry point. Keep `fleetrelay.html` beside it. The frontend is also
+`app.py` as the entry point. Keep `fleetrelay.html` and `al_ain_map.json` beside it. The frontend is also
 a standalone page and can be served over HTTPS. No map API key is required for
 the demo.
 
 ## Map
 
-FleetRelay uses [Leaflet](https://leafletjs.com/),
-[MapLibre](https://maplibre.org/) and [OpenFreeMap](https://openfreemap.org/)
-vector tiles based on OpenStreetMap. The map centers on Al Ain and uses English
-place names or Latin-script transliterations when available. Drag and zoom to explore, select a vehicle marker to inspect its
-assignment, or use the reset control to fit the fleet. The breakdown pulse,
-moving vehicles and animated response paths use the scenario clock. The map
-requires internet access. If the English vector map stalls or loses its
-rendering context, the app switches to standard OpenStreetMap tiles, whose
-labels may be in Arabic. If both sources fail, the simulation remains usable
-and the map offers a retry.
+The **Map language** control switches between English and Arabic without
+restarting the drill. Arabic uses local Arabic names where present. The bundled
+map covers the Al Ain demonstration area and renders with Leaflet Canvas,
+without WebGL or live tile requests. Keep `al_ain_map.json` next to the HTML
+file for static hosting. The Streamlit wrapper embeds it in the map iframe.
+
+The bundled geographic extract comes from OpenFreeMap's November 15, 2026
+OpenMapTiles snapshot. The source tile template and coverage are recorded in
+`al_ain_map.json`. Geographic data is © OpenStreetMap contributors, available under
+the [Open Database License](https://www.openstreetmap.org/copyright).
+[OpenFreeMap](https://openfreemap.org/) and [OpenMapTiles](https://openmaptiles.org/)
+are credited on the map.
 
 ## Honest scope
 - The street map is real. All vehicles, drivers, positions, paths, ETAs and notifications are fictional. Response paths illustrate the workflow and do not follow calculated road routes.
