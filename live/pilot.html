@@ -215,7 +215,7 @@ if(driverView){
  $('addRun').addEventListener('submit',async event=>{
   event.preventDefault();
   const button=event.submitter;button.disabled=true;
-  try{showInvite((await api('manage/runs',Object.fromEntries(new FormData(event.target)))).link);event.target.reset();$('inviteUrl').select();await refresh();}
+  try{const {link}=await api('manage/runs',Object.fromEntries(new FormData(event.target)));event.target.reset();showInvite(link);await refresh();}
   catch(error){message(error.message);}finally{button.disabled=false;}
  });
  action($('copyInvite'),async()=>{await navigator.clipboard.writeText($('inviteUrl').value);message('Driver link copied.');});
