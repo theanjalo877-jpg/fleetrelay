@@ -56,3 +56,17 @@ Authenticated accounts and permissions; consented location telemetry; licensed m
 
 ## Validation
 Run `node test_workflow.cjs` to check the state machine, eligibility, rejection, arrival and handover ordering. The frontend has no build step. `fleetrelay.html` can also be opened directly in a modern browser.
+
+## School transport drill
+
+Open **School drill** and select one of five example schools. The three yellow
+buses use fictional driver names and licence numbers. Hover or tap a marker
+to inspect its driver and passenger count. Use **Fleet** for Mulkiya, insurance,
+driver licence, vehicle inspection, oil-change and scheduled-service checks.
+
+Start the drill to watch a simulated traffic queue, then supervise unloading
+at the demonstration gate and confirm the handover. Schools are examples only.
+The route paths and gates are illustrative, and the drill contains no children's
+names, addresses, home pins or live telemetry. The drill demonstrates the
+district-level dispatch view. It does not implement production accounts or
+permissions for private stops.
