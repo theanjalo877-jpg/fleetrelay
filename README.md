@@ -98,3 +98,19 @@ The Sites deployment uses the Worker assembled by
 Public campus pins in the demo use the published Al Ain Juniors and Al Dhafra
 school pins and published GEMS Our Own and Al Sanawbar location data. The Indian
 School marker uses the nearby public bus stop pending campus-pin verification. Pickup locations are fictional.
+
+### Fleet comparison and map detail
+
+Use **Response → Scenario** to select the B09 breakdown where B07 is full.
+FleetRelay compares staffed vehicles by arrival estimate, free seats and next
+assignment. It rejects B07 with 35 occupied seats and checks the remaining
+fleet for a single bus that can safely take all 28 passengers. The demo
+does not split a student group automatically. Completed response routes are
+cleared and boarding totals update after the confirmed handover.
+
+Use **Fleet → Add a bus or recovery unit** to add session-only vehicles at
+mapped staging locations. Recovery units can be selected when requesting
+recovery. The map's search control covers the bundled Al Ain extent, with
+street, landmark and named business labels from OpenStreetMap/OpenFreeMap
+and an independently sourced STMC location. Label density increases as you
+zoom. Coverage reflects the source snapshot.
