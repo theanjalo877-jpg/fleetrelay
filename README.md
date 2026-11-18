@@ -46,7 +46,7 @@ the [Open Database License](https://www.openstreetmap.org/copyright).
 are credited on the map.
 
 ## Honest scope
-- The street map is real. All vehicles, drivers, positions, paths, ETAs and notifications are fictional. Response paths illustrate the workflow and do not follow calculated road routes.
+- The street map is real. Vehicles, drivers, assignments, ETAs and notifications are fictional. Demo vehicle tracks are precomputed OSRM car routes based on OpenStreetMap. The breakdown is staged at a fixed mapped roadside point. The school bus pauses for fictional pickups and unloads at the mapped school approach. The demo does not calculate live traffic or certify bus-specific restrictions.
 - The assistant uses deterministic rules, **not a connected AI model**. The prototype demonstrates an AI-assisted product concept without claiming live AI capabilities.
 - The selection checks 28-passenger capacity, driver availability and an illustrative 35-minute response-service allowance against the next assignment.
 - Driver accounts are simulated views on one device, not authenticated logins. No push messages or SMS are sent.
@@ -70,7 +70,7 @@ driver licence, vehicle inspection, oil-change and scheduled-service checks.
 
 Start the drill to watch a simulated traffic queue, then supervise unloading
 at the demonstration gate and confirm the handover. Schools are examples only.
-The route paths and gates are illustrative, and the drill contains no children's
+The road routes connect fictional stops to mapped school approaches, and the drill contains no children's
 names, addresses, home pins or live telemetry. The drill demonstrates the
 district-level dispatch view. It does not implement production accounts or
 permissions for private stops.
@@ -97,5 +97,4 @@ The Sites deployment uses the Worker assembled by
 `live/drizzle`. The existing Streamlit simulator links to the hosted live desk.
 Public campus pins in the demo use the published Al Ain Juniors and Al Dhafra
 school pins and published GEMS Our Own and Al Sanawbar location data. The Indian
-School marker uses the nearby public bus stop pending campus-pin verification. Pickup icons and
-routes are fictional.
+School marker uses the nearby public bus stop pending campus-pin verification. Pickup locations are fictional.
