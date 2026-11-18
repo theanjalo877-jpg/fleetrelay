@@ -32,14 +32,14 @@ the demo.
 
 ## Map
 
-FleetRelay uses [Leaflet](https://leafletjs.com/) and
-[OpenStreetMap](https://www.openstreetmap.org/copyright) street tiles centered
-on Al Ain. Drag and zoom to explore, select a vehicle marker to inspect its
+FleetRelay uses [Leaflet](https://leafletjs.com/),
+[MapLibre](https://maplibre.org/) and [OpenFreeMap](https://openfreemap.org/)
+vector tiles based on OpenStreetMap. The map centers on Al Ain and uses English
+place names or Latin-script transliterations when available. Drag and zoom to explore, select a vehicle marker to inspect its
 assignment, or use the reset control to fit the fleet. The breakdown pulse,
 moving vehicles and animated response paths use the scenario clock. The map
 requires internet access, and the simulation panel stays available if tiles
-fail. The public tile service is subject to the
-[OpenStreetMap tile usage policy](https://operations.osmfoundation.org/policies/tiles/).
+fail or the browser cannot render the vector map.
 
 ## Honest scope
 - The street map is real. All vehicles, drivers, positions, paths, ETAs and notifications are fictional. Response paths illustrate the workflow and do not follow calculated road routes.
