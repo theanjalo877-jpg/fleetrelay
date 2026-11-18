@@ -49,6 +49,9 @@
 .school-check.soon {background:#fff4d8;border-color:#cc7c00}
 .school-check.overdue {background:#fce9e5;border-color:#b92823;color:#861e1a}
 .school-privacy {margin-top:8px;font-size:11px}.school-privacy summary {cursor:pointer;font-weight:700}.school-privacy p {margin-top:6px}
+.demo-pickup span {display:grid;place-items:center;background:#e6e0ff;color:#3c2572;
+ width:24px;height:24px;border-radius:7px;border:1px dashed #5a4295;font-size:15px;font-weight:800}
+.live-desk-link {color:var(--green);font-weight:750;font-size:11px;white-space:nowrap}
 .school-gate span {display:block;padding:5px;border-radius:7px;text-align:center;font-weight:800;background:#213733;color:#fff;font-size:11px}
 .school-car span {display:block;width:15px;height:9px;background:#f87c3f;border:1px solid #782015;border-radius:3px}
 .school-walk-track {position:relative;width:135px;height:53px;pointer-events:none}
@@ -200,7 +203,7 @@ License: GPL-2+
 
 -->
 </head><body>
-<header><div class="row"><div class="logo"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 19 5M6 5h13v13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><h1>FleetRelay<span style="color:#408c66">.</span></h1><div class="credit">An Anjalo Theophine Wilson project demo</div></div></div><div class="header-right"><span class="pill"><i class="dot"></i> SIMULATED OPERATIONS</span><button id="schoolModeBtn" class="small">School drill</button><button id="driverBtn" class="small">Driver app <span id="notifCount"></span></button><button id="aboutBtn" class="small"><span class="about-label">About this </span>project</button></div></header>
+<header><div class="row"><div class="logo"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 19 5M6 5h13v13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><h1>FleetRelay<span style="color:#408c66">.</span></h1><div class="credit">An Anjalo Theophine Wilson project demo</div></div></div><div class="header-right"><span class="pill"><i class="dot"></i> SIMULATED OPERATIONS</span><a class="live-desk-link" href="https://fleetrelay-map.unhurriedsky8.chatgpt.site/live" target="_top">Live desk</a><button id="schoolModeBtn" class="small">School drill</button><button id="driverBtn" class="small">Driver app <span id="notifCount"></span></button><button id="aboutBtn" class="small"><span class="about-label">About this </span>project</button></div></header>
 <main class="workspace"><div id="map" role="region" aria-label="Interactive map of Al Ain with simulated fleet positions"></div><div id="mapStatus" class="map-status" hidden><span role="status" id="mapStatusText"></span> <button class="small" id="retryStreetMap" hidden>Retry map</button></div>
 <div class="topstrip"><div class="map-label"><strong id="mapTitle">Al Ain · Response district</strong><span>Real streets · Simulated fleet</span></div><div class="row"><select id="mapLanguage" aria-label="Map language"><option value="en">English</option><option value="ar" lang="ar">العربية</option></select><button id="pauseBtn" class="small">Pause motion</button><span class="pill" id="clock">09:40</span></div></div>
 <div class="intro-bubble" id="intro"><div class="eyebrow">Fleet continuity, in motion</div><h2>A breakdown.<br>A better response.</h2><p>Keep passengers moving while recovery takes care of the vehicle. Experience both sides of the handover.</p><button class="primary wide" id="startBtn">Try a breakdown scenario</button><button class="wide gap" id="schoolIntroBtn">Try the school transport drill</button><p class="micro" style="margin:10px 0 0">Interactive portfolio prototype · about 2 minutes</p></div>
@@ -481,11 +484,11 @@ function download(){const blob=new Blob([managementPdf(state)],{type:'applicatio
 document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.schoolAction)schoolAction(b.dataset.schoolAction);if(b.dataset.schoolBus)inspectSchoolBus(b.dataset.schoolBus,true);if(b.dataset.action)doAction(b.dataset.action);if(b.dataset.close)$(b.dataset.close).close();if(b.dataset.driver)driver(b.dataset.driver);if(b.dataset.candidate){state.selected=b.dataset.candidate;render();}if(b.dataset.vehicle)openVehicle(b.dataset.vehicle,true);if(b.id==='exportBtn')download();});
 $('startBtn').onclick=()=>doAction('start');$('driverBtn').onclick=()=>driver(state.bus==='offered'?'bus':state.tow==='offered'?'tow':role);$('aboutBtn').onclick=()=>$('aboutDialog').showModal();$('busRole').onclick=()=>{role='bus';renderPhone();};$('towRole').onclick=()=>{role='tow';renderPhone();};for(const t of ['response','fleet','activity'])$(t+'Tab').onclick=()=>{tab=t;render();};$('pauseBtn').onclick=()=>{paused=!paused;render();};$('zoomIn').onclick=()=>streetMap?.zoomIn();$('zoomOut').onclick=()=>streetMap?.zoomOut();$('resetMap').onclick=fitFleet;$('resetBtn').onclick=()=>{if(mode==='school'){tab='response';resetSchool();return;}state=FleetEngine.initial();tab='response';selectedVehicle=null;drawTime=0;incidentPoint={x:580,y:360};$('intro').hidden=false;fitFleet();render();toast('Demo restarted. All fictional assignments are reset.');};
 const schoolProfiles=[
- {id:'AJ',name:'Al Ain Juniors',districts:['Asharej','Al Maqam'],gate:[24.2119,55.687],direction:1},
- {id:'OE',name:'Our Own English High School',districts:['Al Jimi','Al Nyadat'],gate:[24.2402,55.727],direction:-1},
- {id:'IS',name:'Indian School',districts:['Town','Al Jahili'],gate:[24.2094,55.744],direction:1},
- {id:'AS',name:'Al Sanawbar School',districts:['Sarooj','Mazyad'],gate:[24.2318,55.762],direction:-1},
- {id:'AD',name:'Al Dhafra School',districts:['Al Maqam','Asharej'],gate:[24.1962,55.681],direction:1},
+ {id:'AJ',name:'Al Ain Juniors',districts:['Asharej','Al Maqam'],gate:[24.1999759,55.7232913],direction:1},
+ {id:'OE',name:'Our Own English High School',districts:['Al Jimi','Al Nyadat'],gate:[24.196929,55.710309],direction:-1},
+ {id:'IS',name:'Indian School',districts:['Town','Al Jahili'],approximate:true,gate:[24.197178,55.708031],direction:1},
+ {id:'AS',name:'Al Sanawbar School',districts:['Sarooj','Mazyad'],gate:[24.197868,55.711755],direction:-1},
+ {id:'AD',name:'Al Dhafra School',districts:['Al Maqam','Asharej'],gate:[24.201154,55.718089],direction:1},
 ];
 const schoolDrivers=['Maya Thomas','Kareem Nasser','Nina Joseph','Hassan Malik','Lina George'];
 const schoolDate=new Intl.DateTimeFormat('en-GB',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Dubai'});
@@ -555,8 +558,14 @@ function buildSchoolMap(){
  L.polyline(path,{color:'#fffdf2',weight:9,interactive:false}).addTo(schoolLayer);
  L.polyline(path,{color:'#a76c09',weight:4,dashArray:'8 7',interactive:false}).addTo(schoolLayer);
  const [lat,lng]=school.gate;
- const icon=L.divIcon({className:'school-gate',iconSize:[108,33],iconAnchor:[54,-33],html:'<span>Demo school gate</span>'});
- L.marker(school.gate,{icon,interactive:false,keyboard:false}).addTo(schoolLayer);
+ const gateLabel=school.approximate?'Nearby public bus stop':'Public school campus';
+ const icon=L.divIcon({className:'school-gate',iconSize:[125,33],iconAnchor:[62,-33],html:`<span>${gateLabel}</span>`});
+ L.marker(school.gate,{icon,title:school.name}).bindTooltip(school.name+' · '+gateLabel).addTo(schoolLayer);
+ for(const [index,progress] of [.08,.27,.43].entries()){
+  const stop=L.divIcon({className:'demo-pickup',iconSize:[24,24],iconAnchor:[12,12],html:'<span aria-hidden="true">⌂</span>'});
+  const label=`Simulated home pickup ${index+1} · no real address`;
+  L.marker(schoolPoint(path,progress),{icon:stop,title:label,zIndexOffset:-40}).bindTooltip(label).addTo(schoolLayer);
+ }
  const positions=[path[0],[lat+.006,lng+.008],[lat-.005,lng-.006]];
  schoolFleet.forEach((bus,i)=>{
   schoolBounds.extend(positions[i]);
@@ -601,7 +610,7 @@ function schoolWalk(){
 }
 function schoolAction(action){
  if(action==='start'&&schoolPhase==='ready'){
-  schoolPhase='traffic';schoolProgress=.20;
+  schoolPhase='traffic';schoolProgress=0;
   schoolLog('Congestion reported · simulated approach to school');
   schoolTraffic();
  }else if(action==='arrive'&&schoolPhase==='traffic'){
@@ -693,10 +702,10 @@ function schoolPanel(){
    <div class="card"><strong>${school.id}-04 · Morning run</strong><p>${school.districts.join(' · ')}<br>${lead.id} · ${schoolPassengerCount(lead)} passengers on board</p></div>
    ${action?setButton(...action):''}
    <button class="wide gap" data-school-bus="${schoolFleet[2].id}">Review overdue fleet alerts</button>
-   <div class="footnote micro"><strong>Privacy in this drill</strong><br>Dispatch sees districts, bus locations and counts. The gate pin and bus paths are illustrative. Student names and home addresses are absent.</div>
+   <div class="footnote micro"><strong>Privacy in this drill</strong><br>Dispatch sees districts, bus locations and counts. Pickup icons and bus paths are simulated. Public campus pins use mapped locations where verified. Student names and home addresses are absent.</div>
    <details class="school-privacy"><summary>How private stops would work</summary>
    <p><strong>Dispatch</strong> sees the school, districts, run and passenger count.</p>
-   <p><strong>Assigned driver</strong> would receive private stops for their current run. The drill uses public-area labels only.</p>
+   <p><strong>Assigned driver</strong> would receive private stops for their current run. The drill uses fictional pickup icons placed on illustrative routes.</p>
    <p><strong>Backup driver</strong> would see the transfer point first. Remaining private stops would be shared after reassignment.</p></details>`;
  }
  $('panel').innerHTML=html;

@@ -74,3 +74,28 @@ The route paths and gates are illustrative, and the drill contains no children's
 names, addresses, home pins or live telemetry. The drill demonstrates the
 district-level dispatch view. It does not implement production accounts or
 permissions for private stops.
+
+## Live pilot
+
+Open **Live desk** on the private FleetRelay site. The site owner should select
+**Set up management** before granting any other accounts site access. Create a
+school run and copy its one-time driver link. The driver opens it in an authorized
+browser, signs in to the site if prompted, accepts the assignment, and starts
+GPS sharing while safely stopped. Use a second device to see positions update.
+The run list refreshes every 3 seconds, identifies stale positions after 45
+seconds, and displays GPS accuracy. The latest position is cleared on stop or
+run removal. The pilot has one manager and stores no student records or location
+history. Use only test or appropriately authorized driver data.
+
+The driver page is a foreground browser pilot. Screen wake is requested when
+available, but background or locked-screen tracking depends on the phone and is
+not guaranteed. Third-party recovery contacts open a call or an editable
+WhatsApp draft and do not send automatically.
+
+The Sites deployment uses the Worker assembled by
+`node live/build.mjs . <worker-output.mjs>` and its D1 migration in
+`live/drizzle`. The existing Streamlit simulator links to the hosted live desk.
+Public campus pins in the demo use the published Al Ain Juniors and Al Dhafra
+school pins and published GEMS Our Own and Al Sanawbar location data. The Indian
+School marker uses the nearby public bus stop pending campus-pin verification. Pickup icons and
+routes are fictional.

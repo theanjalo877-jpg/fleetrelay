@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FleetRelay · Live pilot</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<style>
+:root{color-scheme:dark;--bg:#101b23;--panel:#172630;--line:#314652;--ink:#e9f5f3;--muted:#a0b9bd;--mint:#88e4b8;--amber:#ffd278}
+[hidden]{display:none!important}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,sans-serif}
+header{display:flex;align-items:center;justify-content:space-between;padding:18px clamp(18px,4vw,54px);border-bottom:1px solid var(--line)}
+header strong{font-size:22px;letter-spacing:-.07em}a{color:var(--mint)}main{max-width:1440px;margin:auto;padding:22px clamp(14px,3vw,44px)}
+h1,h2,p{margin:0 0 12px}h1{font-size:clamp(27px,4vw,48px);letter-spacing:-.06em;line-height:1.1}h2{font-size:17px}
+p,small{color:var(--muted)}button,input,select{font:inherit;border-radius:8px;color:var(--ink);border:1px solid var(--line);background:#111f28;padding:9px 10px}
+button{cursor:pointer}button:disabled{opacity:.6;cursor:wait}.primary{background:var(--mint);color:#0c251c;font-weight:750;border:0}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+.grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(300px,1fr);gap:16px}.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+#map{height:clamp(390px,64vh,720px);border-radius:14px;background:#182b37}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.run{border-top:1px solid var(--line);padding:11px 0}.run p{font-size:13px;margin:5px 0}.run a{font-size:13px}
+label{display:grid;gap:4px;font-size:13px;color:var(--muted);margin-bottom:8px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}input{min-width:0;width:100%}
+.badge{font-size:12px;border:1px solid currentColor;border-radius:999px;padding:2px 8px;color:var(--mint)}.badge.stale{color:var(--amber)}
+.leaflet-pane .live-marker{transition:transform .65s linear}@media(prefers-reduced-motion:reduce){.leaflet-pane .live-marker{transition:none}}
+.live-marker span{display:grid;place-items:center;width:31px;height:31px;border:2px solid #fff;border-radius:11px;background:#097a59;color:#fff;font-size:19px;box-shadow:0 3px 12px #1118}
+.live-marker.stale span{background:#a26910}.leaflet-tooltip{font-weight:750}.driver{max-width:560px;margin:auto}.driver button{min-height:46px}.state{font-size:15px;margin:8px 0}.state:empty{display:none}
+@media(max-width:760px){.grid{grid-template-columns:1fr}#map{height:48vh;min-height:300px}}
+</style></head>
+<body><header><strong>FleetRelay.</strong><nav><a href="/demo">School &amp; breakdown demo</a></nav></header>
+<main>
+<section id="manage" hidden>
+<h1>Live fleet desk</h1><p>See driver-shared positions and when each phone last checked in.</p>
+<p id="managementStatus" class="state" role="status"></p>
+<div class="card" id="setup" hidden><p>Set up this private workspace before pairing a driver device.</p><button class="primary" id="setupBtn">Set up management</button></div>
+<div class="grid" id="managementContent" hidden>
+<div id="map" aria-label="Live fleet map"></div>
+<div>
+<form class="card" id="addRun"><h2>Assign a school run</h2><div class="form-grid">
+<label>School<input name="school" required maxlength="80" placeholder="Al Ain Juniors"></label>
+<label>Route<input name="route" required maxlength="80" placeholder="AJ-04 morning"></label>
+<label>Bus ID<input name="vehicle" required maxlength="80" placeholder="B12"></label>
+<label>Driver<input name="driver" required maxlength="80" placeholder="Driver name"></label>
+</div><button class="primary" type="submit">Create driver link</button>
+<div id="invite" hidden><label>Single-use driver link · expires in 2 hours<input id="inviteUrl" readonly></label><button id="copyInvite" type="button">Copy link</button></div></form>
+<form class="card" id="recoveryForm"><h2>Third-party recovery</h2>
+<p>Save providers your dispatcher can call or message when a bus needs recovery.</p>
+<div id="recoveryContacts"></div><div class="form-grid">
+<label>Provider name<input name="name" required maxlength="80"></label>
+<label>Vehicle or dispatch number<input name="phone" required type="tel" maxlength="25" placeholder="+971…"></label>
+</div><button type="submit">Save provider</button></form>
+<div class="card"><div class="row"><h2>Assigned runs</h2><label>School filter<select id="filter"><option value="">All schools</option></select></label></div><div id="runs"></div></div>
+</div></div></section>
+<section id="driver" class="driver" hidden>
+<h1>Driver run</h1><p id="driverStatus" class="state" role="status"></p>
+<div class="card" id="pairing" hidden><p>Link this phone to the assigned run. Sign in to the private FleetRelay site if prompted.</p><button class="primary" id="pairBtn">Accept driver assignment</button></div>
+<div class="card" id="driverRun" hidden><h2 id="assignment"></h2><p id="driverName"></p><div class="row"><button id="start" class="primary">Start run &amp; share GPS</button><button id="stop" disabled>Stop sharing</button></div><p class="state">Keep this page open and the phone awake during the run. Use the controls only when safely stopped.</p></div>
+</section></main>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+const $=id=>document.getElementById(id);
+const driverView=location.pathname==='/driver';
+$(driverView?'driver':'manage').hidden=false;
+const message=text=>$(driverView?'driverStatus':'managementStatus').textContent=text;
+async function api(path,data){
+ const options=data===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)};
+ const response=await fetch('/api/'+path,{...options,cache:'no-store'});
+ let result;
+ try{result=await response.json();}catch{throw new Error('The server did not return a FleetRelay response. Sign in again if needed.');}
+ if(!response.ok)throw new Error(result.error||'Request failed.');
+ return result;
+}
+function action(button,fn,disabled=()=>false){button.addEventListener('click',async()=>{
+ button.disabled=true;
+ try{await fn();}catch(error){message(error.message);}finally{button.disabled=disabled();}
+});}
+let map,markers=new Map(),latest,currentSelection='';
+function initMap(){
+ if(map||!window.L)return;
+ map=L.map('map').setView([24.24,55.74],13);
+ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{
+  maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+ }).addTo(map);
+}
+function renderRuns(data){
+ const list=$('runs');list.replaceChildren();
+ const allowed=data.runs.filter(run=>!$('filter').value||run.school===$('filter').value);
+ const visible=new Set();
+ for(const run of allowed){
+  const fresh=run.active&&run.updated_at&&data.now-run.updated_at<data.staleAfter;
+  const status=fresh?'Live':run.active&&run.updated_at?'Stale':run.active?'Waiting for GPS':'Stopped';
+  const div=document.createElement('article');div.className='run';
+  const title=document.createElement('strong');title.textContent=run.vehicle+' · '+run.school;
+  const badge=document.createElement('span');badge.className='badge'+(status==='Stale'?' stale':'');badge.textContent=status;
+  const head=document.createElement('div');head.className='row';head.append(title,badge);div.append(head);
+  const p=document.createElement('p');p.textContent=run.driver+' · '+run.route+
+   (run.updated_at?' · '+Math.max(0,Math.round((data.now-run.updated_at)/1000))+'s ago · ±'+Math.round(run.accuracy)+' m':'');div.append(p);
+  if(run.active&&run.lat!==null&&run.lng!==null){
+   const link=document.createElement('a');link.href='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(run.lat+','+run.lng);
+   link.target='_blank';link.rel='noopener noreferrer';link.textContent='Open position in Google Maps';div.append(link);
+   if(map){
+    const pos=[run.lat,run.lng];visible.add(run.id);
+    const icon=L.divIcon({className:'live-marker'+(fresh?'':' stale'),html:'<span aria-hidden="true">▣</span>',iconSize:[31,31],iconAnchor:[15,15]});
+    if(!markers.has(run.id)){
+     const label=document.createElement('span');label.textContent=run.vehicle;
+     const marker=L.marker(pos,{icon,title:run.vehicle}).bindTooltip(label).addTo(map);
+     markers.set(run.id,{marker,fresh});
+     if(!currentSelection){map.setView(pos,15);currentSelection=run.id;}
+    }else{
+     const entry=markers.get(run.id);entry.marker.setLatLng(pos);
+     if(entry.fresh!==fresh){entry.marker.setIcon(icon);entry.fresh=fresh;}
+    }
+   }
+  }
+  const controls=document.createElement('div');controls.className='row';
+  if(run.active&&run.updated_at&&map){
+   const locate=document.createElement('button');locate.textContent='Center bus';
+   locate.onclick=()=>map.setView([run.lat,run.lng],Math.max(map.getZoom(),15));controls.append(locate);
+  }
+  const invite=document.createElement('button');invite.textContent='Replace driver link';
+  const remove=document.createElement('button');remove.textContent='Remove run';
+  action(invite,async()=>{if(confirm('Replace this link and stop the current driver session?')){showInvite((await api('manage/invite',{id:run.id})).link);await refresh();}});
+  action(remove,async()=>{if(confirm('Remove this run and its shared position?')){await api('manage/remove',{id:run.id});await refresh();}});
+  controls.append(invite,remove);div.append(controls);list.append(div);
+ }
+ for(const [id,value] of markers){if(!visible.has(id)){value.marker.remove();markers.delete(id);}}
+ if(currentSelection&&!visible.has(currentSelection))currentSelection='';
+ if(!allowed.length)list.textContent='No runs to display.';
+}
+async function refreshRecovery(){
+ const {contacts}=await api('manage/recovery');
+ $('recoveryContacts').replaceChildren(...contacts.map(contact=>{
+  const row=document.createElement('div');row.className='run row';
+  const name=document.createElement('strong');name.textContent=contact.name;
+  const call=document.createElement('a');call.href='tel:'+contact.phone;call.textContent='Call';
+  const chat=document.createElement('a');chat.href='https://wa.me/'+contact.phone.slice(1)+'?text='+encodeURIComponent(
+   'Hello, we need vehicle recovery. Are you available? Please confirm your ETA so we can share the vehicle and meeting details.');
+  chat.textContent='WhatsApp';chat.target='_blank';chat.rel='noopener noreferrer';
+  const remove=document.createElement('button');remove.type='button';remove.textContent='Remove';
+  action(remove,async()=>{if(confirm('Remove this provider?')){await api('manage/recovery/remove',{id:contact.id});await refreshRecovery();}});
+  row.append(name,call,chat,remove);return row;
+ }));
+}
+let refreshing=false,recoveryLoaded=false;
+async function refresh(){
+ if(refreshing)return;
+ refreshing=true;
+ try{
+  latest=await api('manage/runs');
+  if(latest.setup){$('setup').hidden=false;return;}
+  $('setup').hidden=true;$('managementContent').hidden=false;initMap();
+  if(!recoveryLoaded){await refreshRecovery();recoveryLoaded=true;}
+  const selected=$('filter').value;
+  const schools=[...new Set(latest.runs.map(r=>r.school))].sort();
+  if(JSON.stringify(schools)!==$('filter').dataset.schools){
+   $('filter').replaceChildren(new Option('All schools',''),...schools.map(s=>new Option(s,s)));
+   $('filter').dataset.schools=JSON.stringify(schools);$('filter').value=schools.includes(selected)?selected:'';
+  }
+  renderRuns(latest);
+ }catch(error){message(error.message);}finally{refreshing=false;}
+}
+function showInvite(path){$('invite').hidden=false;$('inviteUrl').value=new URL(path,location.href).href;$('inviteUrl').select();message('Copy this link to pair the driver’s phone.');}
+let watchId,heartbeat,wakeLock,lastSent=0,inFlight=false,sharing=false,initializing=false;
+async function loadAssignment(){
+ const {run}=await api('driver/run');
+ $('pairing').hidden=true;$('driverRun').hidden=false;
+ $('assignment').textContent=run.vehicle+' · '+run.school+' · '+run.route;
+ $('driverName').textContent=run.driver;
+ if(run.active){$('start').textContent='Resume GPS sharing';$('stop').disabled=false;message('Resume sharing to send this phone’s current position.');}
+}
+function locationError(error){
+ message(error.code===1?'Location permission is blocked. Allow location access for FleetRelay in your browser settings, then start again.':'Waiting for GPS. Move to a place with better reception.');
+}
+const geoOptions={enableHighAccuracy:true,maximumAge:0,timeout:15000};
+async function sendFix(position){
+ if(!sharing||inFlight||Date.now()-lastSent<2500)return;
+ inFlight=true;
+ try{
+  await api('driver/location',{lat:position.coords.latitude,lng:position.coords.longitude,
+   accuracy:position.coords.accuracy,capturedAt:position.timestamp});
+  lastSent=Date.now();
+  if(sharing)message('Sharing live GPS · last update '+new Date().toLocaleTimeString()+' · ±'+Math.round(position.coords.accuracy)+' m');
+ }catch(error){if(sharing)message(error.message);}finally{inFlight=false;}
+}
+async function requestWake(){
+ if(!sharing||document.hidden||!navigator.wakeLock)return;
+ try{wakeLock=await navigator.wakeLock.request('screen');}catch{}
+}
+function clearWatch(){
+ sharing=false;
+ if(watchId!==undefined)navigator.geolocation.clearWatch(watchId);
+ watchId=undefined;clearInterval(heartbeat);wakeLock?.release().catch(()=>{});wakeLock=undefined;
+}
+async function startSharing(){
+ if(initializing||sharing)return;
+ if(!navigator.geolocation)throw new Error('This browser cannot share location. Use FleetRelay over HTTPS.');
+ initializing=true;
+ message('Waiting for permission and a GPS fix…');
+ try{
+  const firstFix=await new Promise((resolve,reject)=>navigator.geolocation.getCurrentPosition(resolve,reject,geoOptions))
+   .catch(error=>{locationError(error);return Promise.reject(new Error($('driverStatus').textContent));});
+  await api('driver/start',{});
+  sharing=true;lastSent=0;
+  $('start').hidden=true;$('stop').disabled=false;$('stop').dataset.stopped='false';
+  await sendFix(firstFix);
+  if(sharing)watchId=navigator.geolocation.watchPosition(sendFix,locationError,geoOptions);
+  heartbeat=setInterval(()=>{if(sharing&&!document.hidden)navigator.geolocation.getCurrentPosition(sendFix,locationError,geoOptions);},12000);
+  requestWake();
+ }finally{initializing=false;}
+}
+if(driverView){
+ const invitation=location.hash.slice(1);
+ if(invitation){
+  $('pairing').hidden=false;
+  action($('pairBtn'),async()=>{await api('driver/pair',{token:invitation});history.replaceState(null,'','/driver');await loadAssignment();});
+ }else{loadAssignment().catch(e=>message(e.message));}
+ action($('start'),startSharing);
+ action($('stop'),async()=>{clearWatch();$('start').hidden=false;$('start').textContent='Resume GPS sharing';await api('driver/stop',{});$('stop').dataset.stopped='true';message('Location sharing stopped.');},()=>!sharing&&$('stop').dataset.stopped==='true');
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden)requestWake();});
+}else{
+ action($('setupBtn'),async()=>{await api('manage/setup',{});await refresh();});
+ $('addRun').addEventListener('submit',async event=>{
+  event.preventDefault();
+  const button=event.submitter;button.disabled=true;
+  try{const {link}=await api('manage/runs',Object.fromEntries(new FormData(event.target)));event.target.reset();showInvite(link);await refresh();}
+  catch(error){message(error.message);}finally{button.disabled=false;}
+ });
+ action($('copyInvite'),async()=>{await navigator.clipboard.writeText($('inviteUrl').value);message('Driver link copied.');});
+ $('recoveryForm').addEventListener('submit',async event=>{
+  event.preventDefault();
+  const button=event.submitter;button.disabled=true;
+  try{await api('manage/recovery',Object.fromEntries(new FormData(event.target)));event.target.reset();await refreshRecovery();}
+  catch(error){message(error.message);}finally{button.disabled=false;}
+ });
+ $('filter').onchange=()=>{if(latest?.runs)renderRuns(latest);};
+ refresh();setInterval(refresh,3000);
+}
+</script></body></html>
