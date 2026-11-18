@@ -139,3 +139,18 @@ send a message to the driver or transmit to a radio.
 An optional HTTPS camera portal link opens the operator's authorized camera
 vendor page. FleetRelay does not receive or store camera video or vendor
 credentials. The live assignment metadata uses migration `0001_run_monitoring`.
+
+### Finding the full fleet, school day, and Live Desk
+
+The opening map shows 20 school buses (four per school), plus a support van
+and a recovery unit. Active feeder buses use separately routed neighborhood
+segments and staggered departures. Maintenance and reserve units remain
+parked. The Fleet tab can filter the map by school and highlight an individual
+feeder route. The school drill uses the same vehicle IDs and shows its feeder
+bus on a separate route from the main school bus.
+
+Use **Open parking and returns** on the opening screen, or
+**School day → Jump to 08:30 parking**, to load the post-morning checkpoint.
+This is a simulation shortcut. You can still run the full morning sequence.
+In Live Desk, **New run & alerts** takes you directly to the real assignment
+form after private management setup.
