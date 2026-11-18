@@ -88,8 +88,10 @@
 .fleet-brand .credit{
  color:#567069;font-size:clamp(7px,1.8vw,9px);font-weight:700;letter-spacing:.16em;
  text-transform:uppercase;white-space:nowrap;max-width:none;
- animation:credit-reveal .9s cubic-bezier(.22,1,.36,1) both;
- animation-delay:calc(var(--brand-start) + var(--brand-sweep) * .72);
+ }
+.credit-word{
+ display:inline-block;animation:credit-reveal .86s cubic-bezier(.22,1,.36,1) both;
+ animation-delay:calc(var(--brand-start) + var(--brand-sweep) + var(--word-order,0) * .12s);
 }
 .wordmark-arrow{
  position:absolute;z-index:1;top:50%;left:var(--badge-center);width:22px;height:22px;
@@ -111,12 +113,12 @@
  28%{color:#087c58;text-shadow:0 0 5px #78e9ab,0 0 11px #57db9470}
 }
 @keyframes credit-reveal{
- from{opacity:0;filter:blur(4px);transform:translateY(3px)}
+ from{opacity:0;filter:blur(5px);transform:translate(12px,6px)}
  to{opacity:1;filter:blur(0);transform:translateY(0)}
 }
 body:has(.map-paused) .fleet-brand *{animation-play-state:paused}
 @media(prefers-reduced-motion:reduce){
- .wordmark-letter,.fleet-brand .credit,.fleet-brand .logo svg{animation:none}
+ .wordmark-letter,.credit-word,.fleet-brand .logo svg{animation:none}
  .wordmark-arrow{display:none}
 }
 .motion-vehicle{animation:travel-header 10s linear infinite}.motion-tow{animation-delay:-5s}
@@ -288,7 +290,7 @@ License: GPL-2+
   <div><h1 aria-label="FleetRelay"><span class="fleet-wordmark" aria-hidden="true">
    <span class="wordmark-letter" style="--hit:.12">F</span><span class="wordmark-letter" style="--hit:.22">l</span><span class="wordmark-letter" style="--hit:.27">e</span><span class="wordmark-letter" style="--hit:.34">e</span><span class="wordmark-letter" style="--hit:.41">t</span><span class="wordmark-letter" style="--hit:.49">R</span><span class="wordmark-letter" style="--hit:.59">e</span><span class="wordmark-letter" style="--hit:.65">l</span><span class="wordmark-letter" style="--hit:.71">a</span><span class="wordmark-letter" style="--hit:.78">y</span><span class="wordmark-period">.</span>
    <svg class="wordmark-arrow" viewBox="0 0 24 24" fill="none"><path d="M5 19 19 5M6 5h13v13" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-  </span></h1><div class="credit">An Anjalo Theophine Wilson Project</div></div></div>
+  </span></h1><div class="credit"><span class="credit-word" style="--word-order:0">An</span> <span class="credit-word" style="--word-order:1">Anjalo</span> <span class="credit-word" style="--word-order:2">Theophine</span> <span class="credit-word" style="--word-order:3">Wilson</span> <span class="credit-word" style="--word-order:4">Project</span></div></div></div>
  <svg class="fleet-motion" viewBox="0 0 540 55" aria-hidden="true">
   <rect x="0" y="15" width="540" height="34" rx="17" fill="#edf2e7"/>
   <path d="M5 39H535" stroke="#d0decd" stroke-dasharray="8 8" stroke-linecap="round"/>
@@ -1407,7 +1409,7 @@ try {
  const THREE=await import('https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js');
  const scene=new THREE.Scene();
  const camera=new THREE.OrthographicCamera(-14,14,2.35,-2.35,.1,100);
- camera.position.set(4,10,21);camera.lookAt(0,0,0);
+ camera.position.set(0,10,21);camera.lookAt(0,0,0);
  const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
  renderer.domElement.className='fleet-motion fleet-scene';
@@ -1471,7 +1473,7 @@ try {
    box(group,.028,.135,.19,headlamp,length/2+.02,.64,z);
    box(group,.032,.14,.14,tail,-length/2-.02,.65,z);
   }
-  const particles=Array.from({length:7},()=>mesh(group,new THREE.IcosahedronGeometry(1,2),new THREE.MeshBasicMaterial({
+  const particles=Array.from({length:4},()=>mesh(group,new THREE.IcosahedronGeometry(1,2),new THREE.MeshBasicMaterial({
    color:0xc6d3ce,transparent:true,opacity:0,depthWrite:false
   }),0,0,0));
   return {group,length,wheels,particles};
@@ -1498,13 +1500,14 @@ try {
   last=now;
   const run=camera.right+4;
   for(const [index,vehicle] of [bus,truck].entries()){
-   const phase=((elapsed*.115+.62+index*.42)%1);
-   vehicle.group.position.set(reduced.matches?(index===0?.36:-.47)*camera.right:(phase*2-1)*run,0,index===0?.74:-.76);
+   const phase=(elapsed*4/(2*run)+.62+index*.5)%1;
+   const laneX=reduced.matches?(index===0?.45:-.45)*camera.right:(phase*2-1)*run;
+   vehicle.group.position.set(laneX,0,0);
    for(const axle of vehicle.wheels)axle.rotation.z=-elapsed*9;
    vehicle.particles.forEach((p,i)=>{
     const age=(elapsed*.92+i/vehicle.particles.length)%1;
-    p.position.set(-vehicle.length/2-age*.96,.27+age*.48,.27+Math.sin(i*3)*age*.13);
-    p.scale.setScalar(.042+age*.16);p.material.opacity=reduced.matches?0:.28*(1-age);
+    p.position.set(-vehicle.length/2-age*.96,.27+age*.23,.27+Math.sin(i*3)*age*.09);
+    p.scale.setScalar(.042+age*.16);p.material.opacity=reduced.matches?0:.19*(1-age);
    });
   }
   renderer.render(scene,camera);
