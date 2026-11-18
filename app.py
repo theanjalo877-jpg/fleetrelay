@@ -10,4 +10,12 @@ st.html('''<style>
 iframe[title="FleetRelay interactive fleet demo"]{display:block;width:100%!important;height:100dvh!important;min-height:640px;border:0!important}
 [data-testid="stElementContainer"]:has(iframe){height:100dvh!important;min-height:640px}
 </style>''')
-st.iframe(Path(__file__).with_name("fleetrelay.html"), height=1000, alt="FleetRelay interactive fleet demo")
+app_dir = Path(__file__).parent
+html = (app_dir / "fleetrelay.html").read_text(encoding="utf-8")
+map_data = (app_dir / "al_ain_map.json").read_text(encoding="utf-8").replace("</", "<\\/")
+html = html.replace(
+    '<script id="localMapData" type="application/json"></script>',
+    f'<script id="localMapData" type="application/json">{map_data}</script>',
+    1,
+)
+st.iframe(html, height=1000, alt="FleetRelay interactive fleet demo")
