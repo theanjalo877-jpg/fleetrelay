@@ -78,8 +78,10 @@
 [hidden]{display:none!important}
 .fleet-header{position:sticky;top:0;z-index:20;height:auto;min-height:71px;padding:10px clamp(12px,2vw,24px);box-shadow:0 2px 9px #1f332014}
 .fleet-scene{border-radius:11px;display:block}.fleet-motion[hidden]{display:none}.fleet-brand{flex:none}.fleet-motion{flex:1;min-width:75px;max-width:585px;height:54px;overflow:hidden}
-/* One left-to-right pass, followed by the project credit. */
-.fleet-brand{--brand-sweep:1.28s;--brand-start:.12s}
+/* The badge arrow lights the wordmark, then docks while the credit resolves. */
+.fleet-brand{--brand-sweep:1.28s;--brand-start:.12s;--arrow-cycle:2.4s;--badge-center:-29px}
+.fleet-brand .logo svg{animation:badge-dock var(--arrow-cycle) step-end var(--brand-start)}
+@media(max-width:700px){.fleet-brand{--badge-center:-25px}}
 .fleet-wordmark{display:inline-block;position:relative;white-space:nowrap;isolation:isolate}
 .wordmark-letter{display:inline-block;animation:letter-light .64s ease-out both;animation-delay:calc(var(--brand-start) + var(--hit) * var(--brand-sweep))}
 .wordmark-period{color:#408c66}
@@ -90,16 +92,20 @@
  animation-delay:calc(var(--brand-start) + var(--brand-sweep) * .72);
 }
 .wordmark-arrow{
- position:absolute;z-index:1;top:50%;left:-1.4em;width:.83em;height:.83em;
- color:#0b8664;filter:drop-shadow(0 0 3px #7ff2ba);pointer-events:none;
- animation:wordmark-pass var(--brand-sweep) linear var(--brand-start) both;
+ position:absolute;z-index:1;top:50%;left:var(--badge-center);width:22px;height:22px;
+ color:#0b8664;opacity:0;filter:drop-shadow(0 0 3px #7ff2ba);pointer-events:none;
+ animation:wordmark-pass var(--arrow-cycle) linear var(--brand-start) forwards;
 }
 @keyframes wordmark-pass{
- 0%{left:-1.4em;transform:translate(-50%,-50%) rotate(0deg);opacity:0}
- 16%{opacity:1}
- 30%,87%{transform:translate(-50%,-50%) rotate(45deg);opacity:1}
- 100%{left:calc(100% + .45em);transform:translate(-50%,-50%) rotate(45deg);opacity:0}
+ 0%{left:var(--badge-center);transform:translate(-50%,calc(-50% + 7px));color:#d9edba;opacity:1}
+ 16%{transform:translate(-50%,-50%) rotate(45deg);animation-timing-function:linear}
+ 53.333%{left:calc(100% + .45em);transform:translate(-50%,-50%) rotate(45deg);animation-timing-function:ease-in-out}
+ 62%{left:calc(100% + .45em);transform:translate(-50%,-50%) rotate(225deg);animation-timing-function:ease-in-out}
+ 90%{transform:translate(-50%,-50%) rotate(225deg)}
+ 99.999%{opacity:1}
+ 100%{left:var(--badge-center);transform:translate(-50%,calc(-50% + 7px));color:#d9edba;opacity:0}
 }
+@keyframes badge-dock{from{visibility:hidden}to{visibility:visible}}
 @keyframes letter-light{
  0%,100%{color:inherit;text-shadow:none}
  28%{color:#087c58;text-shadow:0 0 5px #78e9ab,0 0 11px #57db9470}
@@ -110,7 +116,7 @@
 }
 body:has(.map-paused) .fleet-brand *{animation-play-state:paused}
 @media(prefers-reduced-motion:reduce){
- .wordmark-letter,.fleet-brand .credit{animation:none}
+ .wordmark-letter,.fleet-brand .credit,.fleet-brand .logo svg{animation:none}
  .wordmark-arrow{display:none}
 }
 .motion-vehicle{animation:travel-header 10s linear infinite}.motion-tow{animation-delay:-5s}
@@ -281,7 +287,7 @@ License: GPL-2+
  <div class="row fleet-brand"><div class="logo"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 19 5M6 5h13v13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
   <div><h1 aria-label="FleetRelay"><span class="fleet-wordmark" aria-hidden="true">
    <span class="wordmark-letter" style="--hit:.12">F</span><span class="wordmark-letter" style="--hit:.22">l</span><span class="wordmark-letter" style="--hit:.27">e</span><span class="wordmark-letter" style="--hit:.34">e</span><span class="wordmark-letter" style="--hit:.41">t</span><span class="wordmark-letter" style="--hit:.49">R</span><span class="wordmark-letter" style="--hit:.59">e</span><span class="wordmark-letter" style="--hit:.65">l</span><span class="wordmark-letter" style="--hit:.71">a</span><span class="wordmark-letter" style="--hit:.78">y</span><span class="wordmark-period">.</span>
-   <svg class="wordmark-arrow" viewBox="0 0 24 24" fill="none"><path d="M5 19 19 5M6 5h13v13" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+   <svg class="wordmark-arrow" viewBox="0 0 24 24" fill="none"><path d="M5 19 19 5M6 5h13v13" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
   </span></h1><div class="credit">An Anjalo Theophine Wilson Project</div></div></div>
  <svg class="fleet-motion" viewBox="0 0 540 55" aria-hidden="true">
   <rect x="0" y="15" width="540" height="34" rx="17" fill="#edf2e7"/>
